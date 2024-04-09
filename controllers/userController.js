@@ -1,7 +1,7 @@
-// controllers/userController.js
-const sql = require('../database');
+const sql = require('../services/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../services/mailer');
 
 exports.register = async (req, res) => {
   const { name, email, password } = req.body;
@@ -28,6 +28,13 @@ exports.register = async (req, res) => {
       VALUES (${name}, ${email}, ${hashedPassword})
     `;
 
+    // Send a welcome email to the user
+    await sendEmail(
+      email,
+      'Welcome to Our Platform',
+      '<p>Thank you for registering. We\'re glad to have you with us.</p>'
+    );
+
     res.json({ message: 'Registration successful' });
   } catch (error) {
     res.status(500).json({ message: 'An error occurred', error: error.message });
@@ -38,6 +45,7 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    // Fetch user details from the database
     const [user] = await sql`
     SELECT id, password
     FROM users
@@ -48,6 +56,7 @@ exports.login = async (req, res) => {
     return res.status(401).json({ message: 'Invalid email or password' });
   }
 
+  // Generate a JWT token
   const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
   res.json({ token });
