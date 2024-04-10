@@ -125,15 +125,19 @@ exports.updateProfile = async (req, res) => {
 };
 
 exports.enrollCourse = async (req, res) => {
-  const userId = req.user.id;
-  const { courseId } = req.body;
+  const userId = parseInt(req.user.id, 10);
+  const courseId = parseInt(req.body.courseId, 10);
+
+  if (isNaN(userId) || isNaN(courseId)) {
+    return res.status(400).json({ message: 'Invalid user ID or course ID' });
+  }
 
   try {
     // Check if the user is already enrolled in the course
     const [existingEnrollment] = await sql`
       SELECT *
       FROM enrollments
-      WHERE user_id = ${userId} AND course_id = ${courseId}
+      WHERE "userId" = ${userId} AND "courseId" = ${courseId}
     `;
 
     if (existingEnrollment) {
@@ -142,7 +146,7 @@ exports.enrollCourse = async (req, res) => {
 
     // Add a new enrollment record in the database
     await sql`
-      INSERT INTO enrollments (user_id, course_id)
+      INSERT INTO enrollments ("userId", "courseId")
       VALUES (${userId}, ${courseId})
     `;
 
@@ -153,15 +157,19 @@ exports.enrollCourse = async (req, res) => {
 };
 
 exports.getEnrolledCourses = async (req, res) => {
-  const userId = req.user.id;
+  const userId = parseInt(req.user.id, 10);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ message: 'Invalid user ID' });
+  }
 
   try {
     // Fetch enrollment records for the authenticated user from the database
     const enrolledCourses = await sql`
       SELECT courses.*
       FROM enrollments
-      JOIN courses ON enrollments.course_id = courses.id
-      WHERE enrollments.user_id = ${userId}
+      JOIN courses ON enrollments."courseId" = courses.id
+      WHERE enrollments."userId" = ${userId}
     `;
 
     res.json(enrolledCourses);
