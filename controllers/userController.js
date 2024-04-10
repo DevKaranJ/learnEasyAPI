@@ -2,6 +2,9 @@ const sql = require('../services/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../services/mailer');
+const multer = require('multer');
+const cloudinaryStorage = require('../services/cloudinaryConfig');
+const upload = multer({ storage: cloudinaryStorage });
 
 exports.register = async (req, res) => {
   const { name, email, password } = req.body;
@@ -70,7 +73,7 @@ exports.getProfile = async (req, res) => {
 
   try {
     const [user] = await sql`
-      SELECT name, email
+      SELECT name, email, profile_pic
       FROM users
       WHERE id = ${userId}
     `;
@@ -88,6 +91,7 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   const userId = req.user.id;
   const { name, email } = req.body;
+  const imageUrl = req.file ? req.file.path : null;
 
   try {
     const [existingUser] = await sql`
@@ -100,13 +104,21 @@ exports.updateProfile = async (req, res) => {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
-    await sql`
-      UPDATE users
-      SET name = ${name}, email = ${email}
-      WHERE id = ${userId}
-    `;
+    if (imageUrl) {
+      await sql`
+        UPDATE users
+        SET name = ${name}, email = ${email}, profile_pic = ${imageUrl}
+        WHERE id = ${userId}
+      `;
+    } else {
+      await sql`
+        UPDATE users
+        SET name = ${name}, email = ${email}
+        WHERE id = ${userId}
+      `;
+    }
 
-    res.json({ message: 'Profile updated successfully' });
+    res.json({ message: 'Profile updated successfully', imageUrl });
   } catch (error) {
     res.status(500).json({ message: 'An error occurred', error: error.message });
   }

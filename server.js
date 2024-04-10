@@ -4,7 +4,7 @@ const express = require('express');
 const app = express();
 const { errorHandler } = require('./middleware/errorMiddleware');
 const morgan = require('morgan');
-const sql = require('./database');
+const sql = require('./services/database');
 
 // Logging middleware
 app.use(morgan('dev'));
