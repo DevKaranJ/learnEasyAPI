@@ -1,4 +1,3 @@
-// services/cloudinaryConfig.js
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
@@ -13,7 +12,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'profile_images',
-    format: async (req, file) => 'png', // supports promises as well
+    format: async (req, file) => 'png',
     public_id: (req, file) => 'profile_image-' + Date.now(),
   },
 });
